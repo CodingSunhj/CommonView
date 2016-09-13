@@ -13,3 +13,4 @@ For example:
         app:normal_color="@color/light_green"
         app:press_color="@color/green"
         android:layout_margin="10dp"/>
+..
