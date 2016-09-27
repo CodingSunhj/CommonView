@@ -1,4 +1,4 @@
-package com.view.shj.commonview;
+package com.commonview.textview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -13,6 +13,8 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
+
+import com.view.shj.commonview.R;
 
 /**
  * Created by SHJ on 2016/9/13.
@@ -78,7 +80,7 @@ public class ButtonTextView extends TextView {
     }
 
     private void getAttrs(Context context, AttributeSet attrs) {
-        TypedArray ta = context.obtainStyledAttributes(attrs,R.styleable.ButtonTextView);
+        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.ButtonTextView);
         mNormal_Color = ta.getColor(R.styleable.ButtonTextView_normal_color,NORMAL_COLOR);
         mPress_Color = ta.getColor(R.styleable.ButtonTextView_press_color,PRESS_COLOR);
         mCorner_Size = ta.getInteger(R.styleable.ButtonTextView_corner_size,CORNER_SIZE);

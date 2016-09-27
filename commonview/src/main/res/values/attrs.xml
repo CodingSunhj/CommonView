@@ -5,4 +5,8 @@
         <attr name="normal_color" format="color"/>
         <attr name="press_color" format="color"/>
     </declare-styleable>
+    <declare-styleable name="FlashTextView">
+        <attr name="bg_color" format="color"/>
+        <attr name="middle_color" format="color"/>
+    </declare-styleable>
 </resources>

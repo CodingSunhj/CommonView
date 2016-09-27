@@ -4,8 +4,8 @@
     xmlns:app = "http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.shj.commonview.MainActivity">
-    <com.view.shj.commonview.ButtonTextView
+    tools:context="com.shj.commonview.activity.MainActivity">
+    <com.commonview.textview.ButtonTextView
         android:id="@+id/btnTv"
         style="@style/white_sp12"
         android:text="加入群聊"
@@ -14,4 +14,29 @@
         app:normal_color="@color/light_green"
         app:press_color="@color/green"
         android:layout_margin="10dp"/>
+    <com.commonview.textview.ButtonTextView
+        style="@style/white_sp12"
+        android:id="@+id/btnRecyclerView"
+        android:text="RecyclerView界面"
+        android:padding="8dp"
+        android:layout_toRightOf="@+id/btnTv"/>
+    <com.commonview.textview.ButtonTextView
+        android:id="@+id/BtnMultiItemViewRv"
+        style="@style/white_sp12"
+        android:layout_below="@+id/btnTv"
+        android:text="对话RecyclerView"
+        android:padding="8dp"
+        app:corner_size="8"
+        app:normal_color="@color/light_green"
+        app:press_color="@color/green"
+        android:layout_margin="10dp"/>
+    <com.commonview.textview.FlashTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="超级口算"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="8dp"/>
 </RelativeLayout>
