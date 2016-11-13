@@ -1,11 +1,15 @@
 package com.commonview.recyclerview;
 
 import android.content.Context;
+import android.support.v4.util.SparseArrayCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+
+import com.view.shj.commonview.R;
 
 import java.util.List;
 
@@ -14,56 +18,86 @@ import java.util.List;
  */
 
 public class MultiItemAdapter<T> extends RecyclerView.Adapter<ViewHolder>{
-    protected static final int ITEM_TYPE_HEADER = 10002;
-
-    private View headerView;
-
-    protected Context mContext;
-    protected ItemViewDelegateManager<T> itemViewDelegateManager;
+    public static final int ITEM_TYPE_HEADER = 10002;
+    public static final int ITEM_TYPE_LOAD_MORE = 10001;
+    private SparseArrayCompat<View> headerViews;
+    private Context mContext;
+    private ItemViewDelegateManager<T> itemViewDelegateManager;
     protected List<T> mDatas;
     public OnItemClickListener onItemClickListener;
     public OnItemLongClickListener onItemLongClickListener;
 
+    public OnLoadMoreListener onLoadMoreListener;
+    private boolean isLoadAll = false;
+
+    private View loadMoreView = null;
+    private int loadMoreLayoutId = 0;
+    private ViewHolder loaderHolder;
     public MultiItemAdapter(Context context,List<T> datas){
         mContext =context;
         mDatas = datas;
         itemViewDelegateManager = new ItemViewDelegateManager<>();
+        headerViews = new SparseArrayCompat<>();
     }
 
     @Override
     public int getItemViewType(int position) {
-        if(headerView!=null && position ==0){
-            return ITEM_TYPE_HEADER;
+        if(headerViews.size()!=0 && position < headerViews.size()){
+            return headerViews.keyAt(position);
+        }
+        if (isShowingLoadMore(position)) {
+            return ITEM_TYPE_LOAD_MORE;
         }
         Log.i("TAG","position"+position+"realPosition"+getRealPosition(position));
         return itemViewDelegateManager.getItemViewType(mDatas.get(getRealPosition(position)),getRealPosition(position));
     }
+    private View getHeaderViewByType(int viewType){
+       return headerViews.get(viewType);
+    }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        if(headerView!=null && viewType==ITEM_TYPE_HEADER){
-            return ViewHolder.createViewHolder(mContext,headerView);
+        if(headerViews.get(viewType)!=null){
+            return  ViewHolder.createViewHolder(mContext,getHeaderViewByType(viewType));
+        }else if (viewType == ITEM_TYPE_LOAD_MORE){
+                if (loadMoreView != null) {
+                    loaderHolder =  ViewHolder.createViewHolder(parent.getContext(), loadMoreView);
+                } else if (loadMoreLayoutId != 0) {
+                    loaderHolder =  ViewHolder.createViewHolder(parent.getContext(), parent, loadMoreLayoutId);
+                } else {
+                    loaderHolder =  ViewHolder.createViewHolder(parent.getContext(), parent, R.layout.item_load_more);
+                }
+            return loaderHolder;
         }else {
             ItemViewDelegate<T> itemViewDelegate = itemViewDelegateManager.getItemViewDelegate(viewType);
             return itemViewDelegate.onCreateViewHolder(parent);
+
         }
     }
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        if(getItemViewType(position)==ITEM_TYPE_HEADER){
+        if(headerViews.size()!=0 && position < headerViews.size()){
+            return;
+        }
+        if (getItemViewType(position)==ITEM_TYPE_LOAD_MORE) {
+            if (!isLoadAll) {
+                if (onLoadMoreListener != null) {
+                    onLoadMoreListener.onLoadMore();
+                }
+            }
             return;
         }
         setListener(holder);
         bindHolder(holder, mDatas.get(getRealPosition(position)));
     }
     public int getRealPosition(int position){
-        return headerView==null?position:position-1;
+        return headerViews.size()==0?position:position-headerViews.size();
     }
 
     @Override
     public int getItemCount() {
-        return headerView==null?mDatas.size():mDatas.size()+1;
+        return headerViews.size()==0?mDatas.size()+1:mDatas.size()+headerViews.size()+1;
     }
 
     public void bindHolder(ViewHolder holder,T t){
@@ -144,15 +178,37 @@ public class MultiItemAdapter<T> extends RecyclerView.Adapter<ViewHolder>{
     }
 
     /**
+     * 追加Adapter数据,可用于loader数据的时候
+     */
+    public void addList(List<T> datas){
+        if(datas!=null && !datas.isEmpty()){
+            this.mDatas.addAll(datas);
+            notifyDataSetChanged();
+        }else if(loadMoreView ==null && loadMoreLayoutId == 0){//如果采用默认布局
+            isLoadAll = true;
+           notifyDataLoadedAll();
+        }
+
+    }
+
+    /**
+     * 通知已经加载完毕
+     */
+        public void notifyDataLoadedAll(){
+            ProgressBar progressBar = loaderHolder.getView(R.id.progressBar);
+            TextView textView = loaderHolder.getView(R.id.loadText);
+            progressBar.setVisibility(View.GONE);
+            textView.setText("已全部加载");
+        }
+    /**
      * 设置头部布局，获取头部布局
      * @param headerView
      */
-    public void setHeaderView(View headerView){
-        this.headerView = headerView;
-        notifyItemInserted(0);
+    public void addHeaderView(View headerView){
+        headerViews.put(ITEM_TYPE_HEADER+headerViews.size(),headerView);
     }
-   public View getHeaderView(){
-       return headerView;
+   public SparseArrayCompat<View> getHeaderView(){
+       return headerViews;
    }
 
 
@@ -177,6 +233,30 @@ public class MultiItemAdapter<T> extends RecyclerView.Adapter<ViewHolder>{
         itemViewDelegateManager.addDelegate(viewType,itemViewDelegate);
         return this;
     }
+
+    /**
+     * 加载更多的配置
+     */
+    public boolean isShowingLoadMore(int position) {
+        return (position >= (getItemCount()-1));
+    }
+    /**
+     * 设置并获取loadMoreView
+     * @param loadMoreView
+     * @return
+     */
+    public MultiItemAdapter<T> setLoadMoreView(View loadMoreView) {
+        this.loadMoreView = loadMoreView;
+        return this;
+    }
+
+    public MultiItemAdapter<T> setLoadMoreView(int loadMoreLayoutId) {
+        this.loadMoreLayoutId = loadMoreLayoutId;
+        return this;
+    }
+    public View getLoadMoreView(){
+        return loaderHolder.getBinderView();
+    }
     /**
      * 定义Adapter的点击事件
      */
@@ -191,6 +271,14 @@ public class MultiItemAdapter<T> extends RecyclerView.Adapter<ViewHolder>{
     }
     public void setOnItemLongClick(OnItemLongClickListener onItemLongClickListener){
         this.onItemLongClickListener = onItemLongClickListener;
+    }
+    public interface OnLoadMoreListener {
+        void onLoadMore();
+    }
+    public void setOnLoadMoreListener(OnLoadMoreListener onLoadMoreListener) {
+        if (onLoadMoreListener != null) {
+            this.onLoadMoreListener = onLoadMoreListener;
+        }
     }
 
 
